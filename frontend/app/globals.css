@@ -1,21 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --background: #090a0f;
-  --foreground: #f1f3f7;
-  --card: #0f121b;
-  --card-border: #1a1e2d;
-  --muted: #161925;
-  --muted-foreground: #7d859b;
-  --accent: #1c2132;
-  --reddit-orange: #ff4500;
-  --success: #10b981;
+  /* Authentic Reddit App Dark Palette */
+  --reddit-bg: #0B0E11;
+  --reddit-surface: #12161A;
+  --reddit-card: #151A1E;
+  --reddit-border: #22272B;
+  --reddit-border-hover: #333B42;
+  --reddit-text: #F2F4F5;
+  --reddit-text-muted: #82959B;
+  --reddit-orange: #FF4500;
+  --reddit-orange-hover: #E03D00;
+  --reddit-blue: #24A0ED;
+  --reddit-flair: #22292E;
+  --reddit-flair-text: #B7C4C9;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Segoe UI", Roboto, sans-serif;
-  background-color: var(--background);
-  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--reddit-bg);
+  color: var(--reddit-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -26,12 +30,20 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #090a0f;
+  background: var(--reddit-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e2334;
+  background: #22272B;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #2b3248;
+  background: #333B42;
+}
+
+/* Dragging active states */
+.reorder-item-dragging {
+  cursor: grabbing !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px #FF4500 !important;
+  transform: scale(1.015);
+  z-index: 50;
 }
