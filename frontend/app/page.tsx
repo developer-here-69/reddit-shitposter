@@ -3,12 +3,6 @@
 import React, { useState, useEffect } from "react"
 import { motion, Reorder, AnimatePresence } from "framer-motion"
 import {
-  DialogTrigger,
-  Modal,
-  Dialog,
-  Button as AriaButton,
-} from "react-aria-components"
-import {
   Sparkles,
   Shuffle,
   Plus,
@@ -16,12 +10,10 @@ import {
   Edit3,
   Trash2,
   Clock,
-  ArrowUpDown,
   GripVertical,
   CheckCircle2,
   AlertCircle,
   ExternalLink,
-  ChevronDown,
   Play,
   Pause,
   MessageSquare,
@@ -35,8 +27,36 @@ import {
   Shield,
   User,
   RefreshCw,
+  Bell,
+  SlidersHorizontal,
+  ArrowUp,
+  ArrowDown,
+  Info,
+  ChevronDown,
 } from "lucide-react"
 import { RedditAccount, QueuePost, PostCategory } from "@/lib/types"
+
+// Real Reddit Logo
+function RedditLogo({ className = "w-8 h-8" }: { className?: string }) {
+  return (
+    <img
+      src="/reddit-logo.svg"
+      alt="Reddit"
+      className={`shrink-0 ${className}`}
+    />
+  )
+}
+
+// Real Subreddit r/ArreSuno Avatar
+function SubredditIcon({ className = "w-8 h-8" }: { className?: string }) {
+  return (
+    <img
+      src="/arresuno-icon.png"
+      alt="r/ArreSuno"
+      className={`rounded-full object-cover shrink-0 border border-[#272B2F] ${className}`}
+    />
+  )
+}
 
 const CATEGORY_FLAIRS: Record<PostCategory, { label: string; bg: string; text: string }> = {
   relatable_life: { label: "💬 Relatable Life", bg: "#1F2833", text: "#66FCF1" },
@@ -45,7 +65,7 @@ const CATEGORY_FLAIRS: Record<PostCategory, { label: string; bg: string; text: s
   casual_rant: { label: "☕ Chai Tapri Rant", bg: "#332222", text: "#FF6B6B" },
 }
 
-export default function RedditDashboard() {
+export default function RedditFeedDashboard() {
   const [subreddit, setSubreddit] = useState("ArreSuno")
   const [accounts, setAccounts] = useState<RedditAccount[]>([])
   const [posts, setPosts] = useState<QueuePost[]>([])
@@ -55,7 +75,7 @@ export default function RedditDashboard() {
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
 
-  // Edit post modal
+  // Edit modal
   const [editingPost, setEditingPost] = useState<QueuePost | null>(null)
 
   // Account modal
@@ -67,7 +87,6 @@ export default function RedditDashboard() {
     setTimeout(() => setToastMessage(null), 3500)
   }
 
-  // Load data
   const fetchData = async () => {
     try {
       setLoading(true)
@@ -90,7 +109,7 @@ export default function RedditDashboard() {
     fetchData()
   }, [])
 
-  // Drag & drop mouse reorder with Framer Motion
+  // Mouse Drag-and-Drop Reorder with Framer Motion
   const handleReorder = async (newOrderQueued: QueuePost[]) => {
     newOrderQueued.forEach((p, idx) => (p.order = idx + 1))
     const nonQueued = posts.filter((p) => p.status !== "queued")
@@ -108,7 +127,7 @@ export default function RedditDashboard() {
     }
   }
 
-  // Shuffle queue function with mouse click
+  // Shuffle queue with mouse click
   const handleShuffle = async () => {
     const queued = posts.filter((p) => p.status === "queued")
     if (queued.length <= 1) {
@@ -116,7 +135,6 @@ export default function RedditDashboard() {
       return
     }
 
-    // Fisher-Yates shuffle
     const shuffled = [...queued]
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
@@ -195,7 +213,7 @@ export default function RedditDashboard() {
     }
   }
 
-  // Save or Add account
+  // Save account
   const handleSaveAccount = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingAccount) return
@@ -293,68 +311,74 @@ export default function RedditDashboard() {
 
   const queuedPosts = posts
     .filter((p) => p.status === "queued")
-    .filter((p) => p.title.toLowerCase().includes(searchQuery.toLowerCase()) || p.body.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter(
+      (p) =>
+        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.body.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     .sort((a, b) => a.order - b.order)
 
   const historyPosts = posts.filter((p) => p.status !== "queued")
 
   return (
-    <div className="min-h-screen bg-[#0B0E11] text-[#F2F4F5] antialiased">
+    <div className="min-h-screen bg-[#0E1113] text-[#D7DADC] font-sans">
       {/* Toast */}
       {toastMessage && (
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 15 }}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 bg-[#181C1F] border border-[#343536] text-[#F2F4F5] rounded-full shadow-2xl text-xs font-semibold"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-2.5 bg-[#1A1D20] border border-[#343A40] text-white rounded-full shadow-2xl text-xs font-semibold"
         >
           <div className="w-2 h-2 rounded-full bg-[#FF4500]" />
           <span>{toastMessage}</span>
         </motion.div>
       )}
 
-      {/* Reddit Header Navbar */}
-      <header className="sticky top-0 z-40 bg-[#12161A] border-b border-[#22272B] px-4 h-14 flex items-center justify-between">
+      {/* Official Reddit Top Header */}
+      <header className="sticky top-0 z-40 bg-[#0E1113] border-b border-[#1A1D20] px-4 h-12 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {/* Reddit Logo Icon */}
-          <div className="w-8 h-8 rounded-full bg-[#FF4500] flex items-center justify-center shadow-md">
-            <svg className="w-5 h-5 fill-white" viewBox="0 0 20 20">
-              <path d="M10 0a10 10 0 1 0 10 10A10 10 0 0 0 10 0zm6.5 10.8a1.9 1.9 0 0 1-1.9 1.8 4.7 4.7 0 0 1-4.6 2.4 4.7 4.7 0 0 1-4.6-2.4 1.9 1.9 0 0 1-1.9-1.8 1.9 1.9 0 0 1 1-1.7 4 4 0 0 1 0-.9 4.3 4.3 0 0 1 4.5-4.3l.8-3.7 2.6.6a1.3 1.3 0 1 1 2.5.4l-3.2-.7-.7 3.4a4.4 4.4 0 0 1 4.5 4.3 4 4 0 0 1 0 .9 1.9 1.9 0 0 1 1 1.7z" />
-            </svg>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-base text-white tracking-tight">reddit</span>
-            <span className="text-[#82959B] text-xs">/</span>
-            <span className="font-semibold text-sm text-[#F2F4F5]">r/{subreddit}</span>
-            <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-[#22272B] text-[#FF4500] border border-[#2D343A]">
-              Mod Studio
+          {/* Real Reddit Logo */}
+          <div className="flex items-center gap-2 cursor-pointer">
+            <RedditLogo className="w-8 h-8" />
+            <span className="font-extrabold text-lg text-white tracking-tighter hidden sm:inline">
+              reddit
             </span>
+          </div>
+
+          {/* Subreddit Switcher Pill */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#1A1D20] hover:bg-[#252A30] border border-[#272B2F] cursor-pointer text-xs font-semibold text-white transition-colors">
+            <SubredditIcon className="w-5 h-5 text-[10px]" />
+            <span>r/{subreddit}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-[#82959B]" />
           </div>
         </div>
 
-        {/* Center Search / Filter Bar */}
-        <div className="hidden md:flex items-center gap-2 bg-[#0B0E11] border border-[#22272B] rounded-full px-3.5 py-1.5 w-80 text-xs">
-          <Search className="w-3.5 h-3.5 text-[#82959B]" />
+        {/* Center Reddit Pill Search Bar */}
+        <div className="hidden md:flex items-center gap-2 bg-[#1A1D20] hover:bg-[#22272B] border border-[#272B2F] rounded-full px-3.5 py-1.5 w-96 text-xs transition-colors">
+          <Search className="w-4 h-4 text-[#82959B]" />
           <input
             type="text"
-            placeholder="Search queued posts..."
+            placeholder={`Search posts in r/${subreddit}...`}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="bg-transparent border-none text-white focus:outline-none w-full text-xs placeholder:text-[#82959B]"
           />
         </div>
 
-        {/* Right Action Buttons */}
-        <div className="flex items-center gap-2.5">
+        {/* Right Actions */}
+        <div className="flex items-center gap-2">
+          {/* Shuffle Button */}
           <button
             onClick={handleShuffle}
             title="Randomly shuffle the queue order"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1A1F24] hover:bg-[#252C33] text-[#F2F4F5] text-xs font-semibold border border-[#2D343A] cursor-pointer transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1A1D20] hover:bg-[#272B2F] text-white text-xs font-bold border border-[#272B2F] cursor-pointer transition-colors shadow-sm"
           >
             <Shuffle className="w-3.5 h-3.5 text-[#FF4500]" />
-            <span className="hidden sm:inline">Shuffle Queue</span>
+            <span className="hidden sm:inline">Shuffle</span>
           </button>
 
+          {/* AI Draft Button */}
           <button
             onClick={() => handleGenerate("relatable_life")}
             disabled={generating}
@@ -364,371 +388,483 @@ export default function RedditDashboard() {
             <span>{generating ? "Drafting..." : "Generate Post"}</span>
           </button>
 
-          <button
-            onClick={() => {
-              setEditingAccount({
-                username: "",
-                clientId: "",
-                clientSecret: "",
-                password: "",
-                dailyLimit: 2,
-              })
-              setAccountModalOpen(true)
-            }}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#1A1F24] hover:bg-[#252C33] text-[#F2F4F5] text-xs font-semibold border border-[#2D343A] cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Account</span>
-          </button>
+          {/* User profile pill */}
+          <div className="flex items-center gap-1.5 pl-2 border-l border-[#22272B]">
+            <div className="w-7 h-7 rounded-full bg-[#272B2F] border border-[#343A40] flex items-center justify-center text-xs font-bold text-[#FF4500]">
+              u/
+            </div>
+            <span className="text-xs font-semibold text-white hidden lg:inline">
+              {accounts[0]?.username || "mere_se_nhi_hota"}
+            </span>
+          </div>
         </div>
       </header>
 
-      {/* Subreddit Community Banner Bar (Authentic Reddit look) */}
-      <div className="bg-[#151A1E] border-b border-[#22272B] px-4 py-4">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-[#FF4500] text-white font-black text-xl flex items-center justify-center border-2 border-[#22272B]">
-              AS
+      {/* Subreddit Banner Header — Real r/ArreSuno Banner & Avatar */}
+      <div className="bg-[#12161A] border-b border-[#1A1D20]">
+        {/* Real r/ArreSuno Panoramic Chai Tapri Banner */}
+        <div className="h-36 sm:h-48 md:h-56 w-full relative overflow-hidden bg-[#1A1D20]">
+          <img
+            src="/arresuno-banner.png"
+            alt="r/ArreSuno Official Community Banner"
+            className="w-full h-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#12161A] via-transparent to-black/20 pointer-events-none" />
+        </div>
+
+        {/* Subreddit Identity Bar */}
+        <div className="max-w-5xl mx-auto px-4 pb-3 flex flex-col sm:flex-row sm:items-end justify-between gap-3 relative -mt-10 sm:-mt-14">
+          <div className="flex items-end gap-3.5">
+            {/* Real r/ArreSuno Community Avatar */}
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#0E1113] p-1 border-4 border-[#0E1113] shadow-2xl shrink-0 relative z-10 overflow-hidden">
+              <img
+                src="/arresuno-icon.png"
+                alt="r/ArreSuno"
+                className="w-full h-full rounded-full object-cover"
+              />
             </div>
-            <div>
+            <div className="pb-1">
               <div className="flex items-center gap-2">
-                <h1 className="font-extrabold text-lg text-white">r/{subreddit}</h1>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#22272B] text-[#82959B]">
-                  Hinglish Community
+                <h1 className="font-extrabold text-2xl text-white tracking-tight">r/{subreddit}</h1>
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#252A30] text-[#FF4500] border border-[#343A40]">
+                  MOD STUDIO
                 </span>
               </div>
-              <p className="text-xs text-[#82959B]">
-                Arre suno... relatable banter, everyday confessions & discussions for Indians
+              <p className="text-xs text-[#82959B] mt-0.5">
+                r/{subreddit} • Hinglish-first community for Indians to share real stories & relatable discussions
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-xs text-[#82959B]">
-            <div className="flex items-center gap-1.5 bg-[#0B0E11] px-3 py-1.5 rounded-full border border-[#22272B]">
+          <div className="flex items-center gap-2 pb-1">
+            <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-[#1A1D20] border border-[#272B2F] text-white flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
-              <span className="font-semibold text-white">{queuedPosts.length} in Queue</span>
-            </div>
-            <div className="flex items-center gap-1.5 bg-[#0B0E11] px-3 py-1.5 rounded-full border border-[#22272B]">
+              <span>{queuedPosts.length} in Queue</span>
+            </span>
+            <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-[#1A1D20] border border-[#272B2F] text-white flex items-center gap-1.5">
               <User className="w-3.5 h-3.5 text-[#24A0ED]" />
-              <span className="font-semibold text-white">{accounts.length} Accounts Rotating</span>
-            </div>
+              <span>{accounts.length} Poster Accounts</span>
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Account Rotation Carousel */}
-        <section className="bg-[#12161A] border border-[#22272B] rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#82959B]">
-                Rotating Poster Accounts
-              </span>
-              <span className="text-[10px] text-[#596277]">(Each posts 2–3 times a day)</span>
-            </div>
+      {/* Main 2-Column Reddit Layout */}
+      <div className="max-w-5xl mx-auto px-4 py-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Left Column: Post Feed & Queue (8 cols) */}
+        <main className="lg:col-span-8 space-y-4">
+          {/* Reddit Create Post Card */}
+          <div className="bg-[#12161A] border border-[#1A1D20] rounded-xl p-3 flex items-center gap-3">
+            <SubredditIcon className="w-8 h-8" />
+            <input
+              type="text"
+              readOnly
+              onClick={() => handleGenerate("relatable_life")}
+              placeholder="Draft a new discussion post with AI for r/ArreSuno..."
+              className="bg-[#1A1D20] hover:bg-[#252A30] border border-[#272B2F] rounded-full px-4 py-2 text-xs text-[#82959B] hover:text-white cursor-pointer w-full transition-colors"
+            />
             <button
-              onClick={() => {
-                setEditingAccount({
-                  username: "",
-                  clientId: "",
-                  clientSecret: "",
-                  password: "",
-                  dailyLimit: 2,
-                })
-                setAccountModalOpen(true)
-              }}
-              className="text-xs text-[#FF4500] hover:underline font-semibold cursor-pointer flex items-center gap-1"
+              onClick={() => handleGenerate("relatable_life")}
+              disabled={generating}
+              className="p-2 rounded-full bg-[#1A1D20] hover:bg-[#252A30] border border-[#272B2F] text-[#FF4500] cursor-pointer"
+              title="Generate with Gemini"
             >
-              <Plus className="w-3 h-3" />
-              <span>Add account</span>
+              <Sparkles className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {accounts.map((acc) => (
-              <div
-                key={acc.id}
-                className={`p-3 rounded-xl border transition-all ${
-                  acc.isActive
-                    ? "bg-[#181D22] border-[#2B3238]"
-                    : "bg-[#121518] border-[#1C2024] opacity-60"
+          {/* Feed Filter Sort Bar (Hot / Queued / History / Shuffle) */}
+          <div className="bg-[#12161A] border border-[#1A1D20] rounded-xl p-2.5 flex items-center justify-between text-xs font-bold">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveTab("queue")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors cursor-pointer ${
+                  activeTab === "queue"
+                    ? "bg-[#252A30] text-white"
+                    : "text-[#82959B] hover:bg-[#1A1D20] hover:text-white"
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: acc.color || "#FF4500" }}
-                    />
-                    <span className="font-bold text-xs text-white">u/{acc.username}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleToggleAccount(acc)}
-                      title={acc.isActive ? "Pause posting from this account" : "Activate account"}
-                      className={`p-1 rounded cursor-pointer ${
-                        acc.isActive ? "text-[#10B981] hover:bg-[#10B981]/10" : "text-[#82959B] hover:bg-[#82959B]/10"
-                      }`}
-                    >
-                      {acc.isActive ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingAccount(acc)
-                        setAccountModalOpen(true)
-                      }}
-                      className="p-1 rounded text-[#82959B] hover:text-white cursor-pointer"
-                    >
-                      <Edit3 className="w-3 h-3" />
-                    </button>
-                    {accounts.length > 1 && (
-                      <button
-                        onClick={() => handleDeleteAccount(acc.id)}
-                        className="p-1 rounded text-[#82959B] hover:text-[#EF4444] cursor-pointer"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <Flame className="w-4 h-4 text-[#FF4500]" />
+                <span>Hot Queue ({queuedPosts.length})</span>
+              </button>
 
-                <div className="mt-2.5 flex items-center justify-between text-[11px] text-[#82959B] pt-2 border-t border-[#22272B]">
-                  <span>Daily: {acc.postedToday}/{acc.dailyLimit} posted</span>
-                  <span className={acc.clientId ? "text-[#10B981] font-mono" : "text-[#EAB308]"}>
-                    {acc.clientId ? "Ready" : "No Auth"}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Tab Selector (Hot Queue / History) */}
-        <div className="flex items-center justify-between border-b border-[#22272B] pb-2">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setActiveTab("queue")}
-              className={`flex items-center gap-2 text-sm font-bold pb-2 -mb-2.5 transition-colors cursor-pointer border-b-2 ${
-                activeTab === "queue"
-                  ? "border-[#FF4500] text-white"
-                  : "border-transparent text-[#82959B] hover:text-[#C1CAD0]"
-              }`}
-            >
-              <Flame className="w-4 h-4 text-[#FF4500]" />
-              <span>Upcoming Queue ({queuedPosts.length})</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("history")}
-              className={`flex items-center gap-2 text-sm font-bold pb-2 -mb-2.5 transition-colors cursor-pointer border-b-2 ${
-                activeTab === "history"
-                  ? "border-[#FF4500] text-white"
-                  : "border-transparent text-[#82959B] hover:text-[#C1CAD0]"
-              }`}
-            >
-              <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
-              <span>Posted Archive ({historyPosts.length})</span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-[#82959B] hidden sm:inline">
-              Drag cards with mouse to reorder
-            </span>
-            <button
-              onClick={handleShuffle}
-              className="p-1.5 rounded-lg bg-[#151A1E] border border-[#22272B] text-[#82959B] hover:text-white cursor-pointer"
-              title="Shuffle queue"
-            >
-              <Shuffle className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Feed Cards Section */}
-        {activeTab === "queue" && (
-          <div>
-            {queuedPosts.length === 0 ? (
-              <div className="text-center py-16 bg-[#12161A] border border-dashed border-[#22272B] rounded-2xl">
-                <Clock className="w-10 h-10 text-[#49545C] mx-auto mb-3" />
-                <h3 className="font-bold text-white text-base">Your queue is empty</h3>
-                <p className="text-xs text-[#82959B] max-w-sm mx-auto mt-1 mb-4">
-                  Generate fresh Hinglish discussion topics with Gemini to keep r/{subreddit} active.
-                </p>
-                <button
-                  onClick={() => handleGenerate("relatable_life")}
-                  disabled={generating}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FF4500] hover:bg-[#E03D00] text-white text-xs font-bold cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Generate Next Post</span>
-                </button>
-              </div>
-            ) : (
-              /* Framer Motion Reorder.Group for smooth mouse drag and drop! */
-              <Reorder.Group
-                axis="y"
-                values={queuedPosts}
-                onReorder={handleReorder}
-                className="space-y-3.5"
+              <button
+                onClick={() => setActiveTab("history")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors cursor-pointer ${
+                  activeTab === "history"
+                    ? "bg-[#252A30] text-white"
+                    : "text-[#82959B] hover:bg-[#1A1D20] hover:text-white"
+                }`}
               >
-                {queuedPosts.map((post, idx) => {
-                  const assignedAcc = accounts.find((a) => a.id === post.accountId)
-                  const flair = CATEGORY_FLAIRS[post.category] || CATEGORY_FLAIRS.relatable_life
-                  return (
-                    <Reorder.Item
-                      key={post.id}
-                      value={post}
-                      whileDrag={{ scale: 1.015, boxShadow: "0 12px 32px rgba(0,0,0,0.8)" }}
-                      className="bg-[#12161A] hover:bg-[#151A1E] border border-[#22272B] hover:border-[#2D343A] rounded-2xl p-4 transition-colors cursor-default select-none group"
-                    >
-                      {/* Reddit Post Header */}
-                      <div className="flex items-center justify-between text-xs text-[#82959B] mb-2.5">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <div className="w-5 h-5 rounded-full bg-[#FF4500] text-white font-bold text-[9px] flex items-center justify-center">
-                            r/
-                          </div>
-                          <span className="font-bold text-white">r/{subreddit}</span>
-                          <span>•</span>
-                          <span>Posted by</span>
-                          <span
-                            className="font-semibold px-2 py-0.5 rounded-full text-[11px]"
-                            style={{
-                              backgroundColor: `${assignedAcc?.color || "#FF4500"}20`,
-                              color: assignedAcc?.color || "#FF4500",
-                            }}
-                          >
-                            u/{assignedAcc?.username || "unassigned"}
-                          </span>
-                          <span>•</span>
-                          <span className="text-[#82959B] flex items-center gap-1 font-mono">
-                            <Clock className="w-3 h-3" />
-                            Scheduled:{" "}
-                            {new Date(post.scheduledAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                        </div>
+                <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
+                <span>Posted Archive ({historyPosts.length})</span>
+              </button>
+            </div>
 
-                        {/* Drag Handle with Grip icon */}
-                        <div
-                          className="flex items-center gap-1 text-[#556066] group-hover:text-[#82959B] cursor-grab active:cursor-grabbing px-2 py-1 rounded bg-[#0B0E11] border border-[#1F2428]"
-                          title="Click and drag with mouse to reorder"
-                        >
-                          <GripVertical className="w-3.5 h-3.5" />
-                          <span className="text-[10px] font-mono font-bold">#{idx + 1}</span>
-                        </div>
-                      </div>
-
-                      {/* Post Flair */}
-                      <div className="mb-2">
-                        <span
-                          className="text-[11px] font-bold px-2 py-0.5 rounded-full border border-white/10"
-                          style={{ backgroundColor: flair.bg, color: flair.text }}
-                        >
-                          {flair.label}
-                        </span>
-                      </div>
-
-                      {/* Post Title */}
-                      <h2 className="text-base font-bold text-white mb-2 leading-snug">
-                        {post.title}
-                      </h2>
-
-                      {/* Post Body (Reddit Self-Text look) */}
-                      <p className="text-xs text-[#D7DADC] leading-relaxed whitespace-pre-wrap font-normal mb-4">
-                        {post.body}
-                      </p>
-
-                      {/* Reddit Action Bar at Bottom */}
-                      <div className="flex items-center justify-between border-t border-[#1C2126] pt-3 text-xs">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setEditingPost(post)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#181D22] hover:bg-[#222830] text-[#82959B] hover:text-white font-semibold cursor-pointer border border-[#262D33]"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                            <span>Edit Post</span>
-                          </button>
-
-                          <button
-                            onClick={() => handleDeletePost(post.id)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#181D22] hover:bg-[#2B1B1D] text-[#82959B] hover:text-[#EF4444] cursor-pointer border border-[#262D33]"
-                            title="Delete from queue"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-
-                        <button
-                          onClick={() => handlePublishNow(post.id)}
-                          className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#FF4500] hover:bg-[#E03D00] text-white font-bold cursor-pointer shadow-sm text-xs"
-                        >
-                          <Send className="w-3 h-3" />
-                          <span>Post to Reddit Now</span>
-                        </button>
-                      </div>
-                    </Reorder.Item>
-                  )
-                })}
-              </Reorder.Group>
-            )}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-[#556066] hidden sm:inline">
+                Drag cards with mouse to reorder
+              </span>
+              <button
+                onClick={handleShuffle}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#1A1D20] hover:bg-[#252A30] border border-[#272B2F] text-white cursor-pointer"
+                title="Shuffle queue"
+              >
+                <Shuffle className="w-3.5 h-3.5 text-[#FF4500]" />
+                <span>Shuffle</span>
+              </button>
+            </div>
           </div>
-        )}
 
-        {/* History Tab */}
-        {activeTab === "history" && (
-          <div className="space-y-3">
-            {historyPosts.length === 0 ? (
-              <div className="text-center py-16 text-xs text-[#82959B]">
-                No posts published yet. Once a queued post is published, it will be archived here with its live Reddit link.
-              </div>
-            ) : (
-              historyPosts.map((post) => {
-                const assignedAcc = accounts.find((a) => a.id === post.accountId)
-                return (
-                  <div
-                    key={post.id}
-                    className="p-4 rounded-xl bg-[#12161A] border border-[#22272B] flex items-center justify-between"
+          {/* Feed Posts */}
+          {activeTab === "queue" && (
+            <div>
+              {queuedPosts.length === 0 ? (
+                <div className="text-center py-16 bg-[#12161A] border border-dashed border-[#1A1D20] rounded-xl">
+                  <Clock className="w-10 h-10 text-[#49545C] mx-auto mb-2" />
+                  <p className="font-bold text-white text-sm">No scheduled posts in queue</p>
+                  <p className="text-xs text-[#82959B] mt-1 mb-4">
+                    Click Generate to draft your next Hinglish discussion post.
+                  </p>
+                  <button
+                    onClick={() => handleGenerate("relatable_life")}
+                    disabled={generating}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#FF4500] hover:bg-[#E03D00] text-white text-xs font-bold cursor-pointer"
                   >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
-                        <span className="font-bold text-sm text-white">{post.title}</span>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Generate Discussion</span>
+                  </button>
+                </div>
+              ) : (
+                /* Framer Motion Reorder.Group for smooth mouse drag & drop! */
+                <Reorder.Group
+                  axis="y"
+                  values={queuedPosts}
+                  onReorder={handleReorder}
+                  className="space-y-3"
+                >
+                  {queuedPosts.map((post, idx) => {
+                    const assignedAcc = accounts.find((a) => a.id === post.accountId)
+                    const flair = CATEGORY_FLAIRS[post.category] || CATEGORY_FLAIRS.relatable_life
+                    return (
+                      <Reorder.Item
+                        key={post.id}
+                        value={post}
+                        whileDrag={{
+                          scale: 1.015,
+                          boxShadow: "0 12px 30px rgba(0,0,0,0.8)",
+                          cursor: "grabbing",
+                        }}
+                        className="bg-[#12161A] hover:bg-[#15191E] border border-[#1A1D20] hover:border-[#272B2F] rounded-xl p-3.5 transition-colors cursor-default select-none group"
+                      >
+                        {/* Post Header */}
+                        <div className="flex items-center justify-between text-xs text-[#82959B] mb-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <SubredditIcon className="w-5 h-5 text-[9px]" />
+                            <span className="font-bold text-white hover:underline cursor-pointer">
+                              r/{subreddit}
+                            </span>
+                            <span>•</span>
+                            <span>Posted by</span>
+                            <span
+                              className="font-semibold px-2 py-0.5 rounded-full text-[11px]"
+                              style={{
+                                backgroundColor: `${assignedAcc?.color || "#FF4500"}20`,
+                                color: assignedAcc?.color || "#FF4500",
+                              }}
+                            >
+                              u/{assignedAcc?.username || "unassigned"}
+                            </span>
+                            <span>•</span>
+                            <span className="flex items-center gap-1 text-[#82959B] font-mono">
+                              <Clock className="w-3 h-3 text-[#FF4500]" />
+                              Scheduled:{" "}
+                              {new Date(post.scheduledAt).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+
+                          {/* Grip Handle for Mouse Drag Reordering */}
+                          <div
+                            className="flex items-center gap-1 text-[#556066] group-hover:text-white cursor-grab active:cursor-grabbing px-2 py-0.5 rounded bg-[#0E1113] border border-[#1A1D20]"
+                            title="Click and drag with mouse to reorder queue"
+                          >
+                            <GripVertical className="w-3.5 h-3.5" />
+                            <span className="font-mono font-bold text-[10px]">#{idx + 1}</span>
+                          </div>
+                        </div>
+
+                        {/* Post Flair */}
+                        <div className="mb-2">
+                          <span
+                            className="text-[11px] font-bold px-2 py-0.5 rounded-full border border-white/10"
+                            style={{ backgroundColor: flair.bg, color: flair.text }}
+                          >
+                            {flair.label}
+                          </span>
+                        </div>
+
+                        {/* Post Title */}
+                        <h2 className="text-base font-bold text-white mb-2 leading-snug">
+                          {post.title}
+                        </h2>
+
+                        {/* Post Body (Exact Reddit Self-text style) */}
+                        <p className="text-xs text-[#C8D1D7] leading-relaxed whitespace-pre-wrap mb-3.5 font-normal">
+                          {post.body}
+                        </p>
+
+                        {/* Reddit Action Bar */}
+                        <div className="flex items-center justify-between border-t border-[#1A1D20] pt-2.5 text-xs text-[#82959B]">
+                          <div className="flex items-center gap-2">
+                            {/* Vote Pill */}
+                            <div className="flex items-center bg-[#1A1D20] rounded-full px-2.5 py-1 gap-1.5 font-bold text-white border border-[#272B2F]">
+                              <ArrowUp className="w-3.5 h-3.5 text-[#FF4500]" />
+                              <span className="text-[11px]">Queue #{idx + 1}</span>
+                              <ArrowDown className="w-3.5 h-3.5 text-[#82959B]" />
+                            </div>
+
+                            {/* Edit Button */}
+                            <button
+                              onClick={() => setEditingPost(post)}
+                              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1A1D20] hover:bg-[#252A30] text-[#82959B] hover:text-white font-semibold cursor-pointer border border-[#272B2F]"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>Edit</span>
+                            </button>
+
+                            {/* Delete Button */}
+                            <button
+                              onClick={() => handleDeletePost(post.id)}
+                              className="p-1.5 rounded-full bg-[#1A1D20] hover:bg-[#2E181B] text-[#82959B] hover:text-[#EF4444] cursor-pointer border border-[#272B2F]"
+                              title="Delete from queue"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          {/* Post Now Action */}
+                          <button
+                            onClick={() => handlePublishNow(post.id)}
+                            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#FF4500] hover:bg-[#E03D00] text-white font-bold cursor-pointer shadow-sm text-xs"
+                          >
+                            <Send className="w-3 h-3" />
+                            <span>Post to Reddit Now</span>
+                          </button>
+                        </div>
+                      </Reorder.Item>
+                    )
+                  })}
+                </Reorder.Group>
+              )}
+            </div>
+          )}
+
+          {/* Archive / History */}
+          {activeTab === "history" && (
+            <div className="space-y-3">
+              {historyPosts.length === 0 ? (
+                <div className="text-center py-16 bg-[#12161A] border border-[#1A1D20] rounded-xl text-xs text-[#82959B]">
+                  No posts published yet. Once a post is published, it appears here with its live Reddit permalink.
+                </div>
+              ) : (
+                historyPosts.map((post) => {
+                  const assignedAcc = accounts.find((a) => a.id === post.accountId)
+                  return (
+                    <div
+                      key={post.id}
+                      className="p-3.5 rounded-xl bg-[#12161A] border border-[#1A1D20] flex items-center justify-between"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
+                          <span className="font-bold text-sm text-white">{post.title}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-[#82959B]">
+                          <span>by u/{assignedAcc?.username || "unknown"}</span>
+                          <span>•</span>
+                          <span>{new Date(post.postedAt || post.scheduledAt).toLocaleString()}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-[#82959B]">
-                        <span>by u/{assignedAcc?.username || "unknown"}</span>
-                        <span>•</span>
-                        <span>{new Date(post.postedAt || post.scheduledAt).toLocaleString()}</span>
-                      </div>
+
+                      {post.redditUrl && (
+                        <a
+                          href={post.redditUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1A1D20] text-xs font-semibold text-[#24A0ED] hover:text-white border border-[#272B2F]"
+                        >
+                          <span>View on Reddit</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          )}
+        </main>
+
+        {/* Right Sidebar Column (4 cols) — Authentic Reddit Sidebar Widgets */}
+        <aside className="lg:col-span-4 space-y-4">
+          {/* "About Community" Widget with Real Banner & Avatar */}
+          <div className="bg-[#12161A] border border-[#1A1D20] rounded-xl overflow-hidden">
+            {/* Mini Community Banner */}
+            <div className="h-16 relative overflow-hidden bg-[#1A1D20]">
+              <img
+                src="/arresuno-banner.png"
+                alt="r/ArreSuno"
+                className="w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#12161A] via-transparent to-black/30 pointer-events-none" />
+            </div>
+
+            <div className="p-3.5 space-y-3 -mt-6 relative">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <img
+                    src="/arresuno-icon.png"
+                    alt="r/ArreSuno"
+                    className="w-9 h-9 rounded-full border-2 border-[#12161A] object-cover shrink-0 shadow-md"
+                  />
+                  <div>
+                    <span className="font-bold text-white text-xs block">r/ArreSuno</span>
+                    <span className="text-[10px] text-[#82959B]">Community Info</span>
+                  </div>
+                </div>
+                <Shield className="w-4 h-4 text-[#FF4500]" />
+              </div>
+
+              <p className="text-xs text-[#C8D1D7] leading-relaxed">
+                ArreSuno is a Hinglish-first community for Indians to share real stories, ask interesting questions, confess harmless things, and discuss everyday relatable experiences.
+              </p>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#1A1D20] text-xs">
+                <div>
+                  <span className="font-bold text-white block">{queuedPosts.length}</span>
+                  <span className="text-[11px] text-[#82959B]">Queued Posts</span>
+                </div>
+                <div>
+                  <span className="font-bold text-white block">{accounts.length}</span>
+                  <span className="text-[11px] text-[#82959B]">Poster Accounts</span>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-[#1A1D20] flex items-center justify-between text-xs">
+                <span className="text-[#82959B]">Auto-post schedule:</span>
+                <span className="font-semibold text-[#10B981]">3x Daily (IST)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* "Rotating Poster Accounts" Widget */}
+          <div className="bg-[#12161A] border border-[#1A1D20] rounded-xl p-3.5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#82959B]">
+                Poster Accounts Rotation
+              </span>
+              <button
+                onClick={() => {
+                  setEditingAccount({
+                    username: "",
+                    clientId: "",
+                    clientSecret: "",
+                    password: "",
+                    dailyLimit: 2,
+                  })
+                  setAccountModalOpen(true)
+                }}
+                className="text-xs text-[#FF4500] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <Plus className="w-3 h-3" />
+                <span>Add</span>
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {accounts.map((acc) => (
+                <div
+                  key={acc.id}
+                  className={`p-2.5 rounded-lg border text-xs transition-colors ${
+                    acc.isActive
+                      ? "bg-[#181D22] border-[#22272B]"
+                      : "bg-[#121518] border-[#1A1D20] opacity-50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: acc.color || "#FF4500" }}
+                      />
+                      <span className="font-bold text-white">u/{acc.username}</span>
                     </div>
 
-                    {post.redditUrl && (
-                      <a
-                        href={post.redditUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1A1F24] text-xs font-semibold text-[#24A0ED] hover:text-white border border-[#2D343A]"
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleToggleAccount(acc)}
+                        title={acc.isActive ? "Pause account" : "Activate account"}
+                        className={`p-1 rounded cursor-pointer ${
+                          acc.isActive ? "text-[#10B981]" : "text-[#82959B]"
+                        }`}
                       >
-                        <span>View Live</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
+                        {acc.isActive ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingAccount(acc)
+                          setAccountModalOpen(true)
+                        }}
+                        className="p-1 rounded text-[#82959B] hover:text-white cursor-pointer"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                      </button>
+                      {accounts.length > 1 && (
+                        <button
+                          onClick={() => handleDeleteAccount(acc.id)}
+                          className="p-1 rounded text-[#82959B] hover:text-[#EF4444] cursor-pointer"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                )
-              })
-            )}
+
+                  <div className="flex items-center justify-between text-[11px] text-[#82959B] mt-1.5 pt-1.5 border-t border-[#1F2428]">
+                    <span>Quota: {acc.postedToday}/{acc.dailyLimit} posted</span>
+                    <span className={acc.clientId ? "text-[#10B981] font-mono" : "text-[#EAB308]"}>
+                      {acc.clientId ? "Ready" : "Auth Needed"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
+
+          {/* Quick Subreddit Rules Box */}
+          <div className="bg-[#12161A] border border-[#1A1D20] rounded-xl p-3.5 space-y-2 text-xs">
+            <span className="font-bold text-white uppercase text-[11px] tracking-wider text-[#82959B]">
+              r/{subreddit} Posting Rules
+            </span>
+            <ul className="space-y-1.5 text-[11px] text-[#82959B] list-disc list-inside">
+              <li>Keep conversations genuine, respectful & non-political.</li>
+              <li>Natural Hinglish & English mix.</li>
+              <li>Zero spam, affiliate links, or promo.</li>
+              <li>End posts with an open, relatable question.</li>
+            </ul>
+          </div>
+        </aside>
       </div>
 
-      {/* React Aria Dialog Modal: Edit Post */}
+      {/* Edit Post Modal */}
       {editingPost && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#12161A] border border-[#2C343B] rounded-2xl w-full max-w-xl p-6 shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-[#22272B] mb-4">
-              <h3 className="font-bold text-base text-white flex items-center gap-2">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#12161A] border border-[#272B2F] rounded-2xl w-full max-w-xl p-5 shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-[#1A1D20] mb-3.5">
+              <h3 className="font-bold text-sm text-white flex items-center gap-2">
                 <Edit3 className="w-4 h-4 text-[#FF4500]" />
                 <span>Edit Queued Post</span>
               </h3>
@@ -740,36 +876,36 @@ export default function RedditDashboard() {
               </button>
             </div>
 
-            <form onSubmit={handleSavePost} className="space-y-4">
+            <form onSubmit={handleSavePost} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-bold text-[#82959B] mb-1">Post Title</label>
+                <label className="block text-xs font-bold text-[#82959B] mb-1">Title</label>
                 <input
                   type="text"
                   value={editingPost.title}
                   onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B0E11] border border-[#2C343B] text-sm text-white focus:outline-none focus:border-[#FF4500]"
+                  className="w-full px-3 py-2 rounded-lg bg-[#0E1113] border border-[#272B2F] text-xs text-white focus:outline-none focus:border-[#FF4500]"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#82959B] mb-1">Post Body (Markdown)</label>
+                <label className="block text-xs font-bold text-[#82959B] mb-1">Body Text</label>
                 <textarea
                   rows={6}
                   value={editingPost.body}
                   onChange={(e) => setEditingPost({ ...editingPost, body: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B0E11] border border-[#2C343B] text-xs text-white leading-relaxed focus:outline-none focus:border-[#FF4500]"
+                  className="w-full px-3 py-2 rounded-lg bg-[#0E1113] border border-[#272B2F] text-xs text-white leading-relaxed focus:outline-none focus:border-[#FF4500]"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#82959B] mb-1">Assigned Account</label>
+                  <label className="block text-xs font-bold text-[#82959B] mb-1">Poster Account</label>
                   <select
                     value={editingPost.accountId}
                     onChange={(e) => setEditingPost({ ...editingPost, accountId: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#0B0E11] border border-[#2C343B] text-xs text-white focus:outline-none"
+                    className="w-full px-3 py-2 rounded-lg bg-[#0E1113] border border-[#272B2F] text-xs text-white focus:outline-none"
                   >
                     {accounts.map((a) => (
                       <option key={a.id} value={a.id}>
@@ -786,7 +922,7 @@ export default function RedditDashboard() {
                     onChange={(e) =>
                       setEditingPost({ ...editingPost, category: e.target.value as PostCategory })
                     }
-                    className="w-full px-3 py-2 rounded-xl bg-[#0B0E11] border border-[#2C343B] text-xs text-white focus:outline-none"
+                    className="w-full px-3 py-2 rounded-lg bg-[#0E1113] border border-[#272B2F] text-xs text-white focus:outline-none"
                   >
                     <option value="relatable_life">💬 Relatable Life</option>
                     <option value="question">❓ Sawaal-Jawaab</option>
@@ -796,17 +932,17 @@ export default function RedditDashboard() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-[#22272B]">
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#1A1D20]">
                 <button
                   type="button"
                   onClick={() => setEditingPost(null)}
-                  className="px-4 py-2 rounded-full bg-[#181D22] text-xs font-bold text-[#82959B] hover:text-white"
+                  className="px-4 py-1.5 rounded-full bg-[#1A1D20] text-xs font-bold text-[#82959B] hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-full bg-[#FF4500] hover:bg-[#E03D00] text-xs font-bold text-white shadow-sm"
+                  className="px-4 py-1.5 rounded-full bg-[#FF4500] hover:bg-[#E03D00] text-xs font-bold text-white shadow-sm"
                 >
                   Save Changes
                 </button>
@@ -818,10 +954,10 @@ export default function RedditDashboard() {
 
       {/* Account Modal */}
       {accountModalOpen && editingAccount && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#12161A] border border-[#2C343B] rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-[#22272B] mb-4">
-              <h3 className="font-bold text-base text-white flex items-center gap-2">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#12161A] border border-[#272B2F] rounded-2xl w-full max-w-md p-5 shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-[#1A1D20] mb-3.5">
+              <h3 className="font-bold text-sm text-white flex items-center gap-2">
                 <User className="w-4 h-4 text-[#FF4500]" />
                 <span>{editingAccount.id ? "Edit Account" : "Add Reddit Account"}</span>
               </h3>
@@ -833,7 +969,7 @@ export default function RedditDashboard() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveAccount} className="space-y-3.5">
+            <form onSubmit={handleSaveAccount} className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-[#82959B] mb-1">Reddit Username</label>
                 <input
@@ -841,21 +977,19 @@ export default function RedditDashboard() {
                   placeholder="e.g. mere_se_nhi_hota"
                   value={editingAccount.username || ""}
                   onChange={(e) => setEditingAccount({ ...editingAccount, username: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#0B0E11] border border-[#2C343B] text-sm text-white focus:outline-none focus:border-[#FF4500]"
+                  className="w-full px-3 py-2 rounded-lg bg-[#0E1113] border border-[#272B2F] text-xs text-white focus:outline-none focus:border-[#FF4500]"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#82959B] mb-1">
-                  Reddit Client ID (from reddit.com/prefs/apps)
-                </label>
+                <label className="block text-xs font-bold text-[#82959B] mb-1">Reddit Client ID</label>
                 <input
                   type="text"
-                  placeholder="Optional for drafting"
+                  placeholder="From reddit.com/prefs/apps (optional for drafts)"
                   value={editingAccount.clientId || ""}
                   onChange={(e) => setEditingAccount({ ...editingAccount, clientId: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#0B0E11] border border-[#2C343B] text-xs text-white focus:outline-none focus:border-[#FF4500]"
+                  className="w-full px-3 py-2 rounded-lg bg-[#0E1113] border border-[#272B2F] text-xs text-white focus:outline-none focus:border-[#FF4500]"
                 />
               </div>
 
@@ -863,10 +997,10 @@ export default function RedditDashboard() {
                 <label className="block text-xs font-bold text-[#82959B] mb-1">Reddit Client Secret</label>
                 <input
                   type="password"
-                  placeholder="Optional for drafting"
+                  placeholder="From reddit.com/prefs/apps"
                   value={editingAccount.clientSecret || ""}
                   onChange={(e) => setEditingAccount({ ...editingAccount, clientSecret: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#0B0E11] border border-[#2C343B] text-xs text-white focus:outline-none focus:border-[#FF4500]"
+                  className="w-full px-3 py-2 rounded-lg bg-[#0E1113] border border-[#272B2F] text-xs text-white focus:outline-none focus:border-[#FF4500]"
                 />
               </div>
 
@@ -877,12 +1011,12 @@ export default function RedditDashboard() {
                   placeholder="Account password"
                   value={editingAccount.password || ""}
                   onChange={(e) => setEditingAccount({ ...editingAccount, password: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#0B0E11] border border-[#2C343B] text-xs text-white focus:outline-none focus:border-[#FF4500]"
+                  className="w-full px-3 py-2 rounded-lg bg-[#0E1113] border border-[#272B2F] text-xs text-white focus:outline-none focus:border-[#FF4500]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#82959B] mb-1">Daily Post Limit</label>
+                <label className="block text-xs font-bold text-[#82959B] mb-1">Daily Post Cap</label>
                 <input
                   type="number"
                   min={1}
@@ -891,21 +1025,21 @@ export default function RedditDashboard() {
                   onChange={(e) =>
                     setEditingAccount({ ...editingAccount, dailyLimit: parseInt(e.target.value) })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-[#0B0E11] border border-[#2C343B] text-xs text-white focus:outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-[#0E1113] border border-[#272B2F] text-xs text-white focus:outline-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-[#22272B]">
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#1A1D20]">
                 <button
                   type="button"
                   onClick={() => setAccountModalOpen(false)}
-                  className="px-4 py-2 rounded-full bg-[#181D22] text-xs font-bold text-[#82959B] hover:text-white"
+                  className="px-4 py-1.5 rounded-full bg-[#1A1D20] text-xs font-bold text-[#82959B] hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-full bg-[#FF4500] hover:bg-[#E03D00] text-xs font-bold text-white shadow-sm"
+                  className="px-4 py-1.5 rounded-full bg-[#FF4500] hover:bg-[#E03D00] text-xs font-bold text-white shadow-sm"
                 >
                   Save Account
                 </button>
