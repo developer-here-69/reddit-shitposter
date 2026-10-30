@@ -22,6 +22,15 @@ from typing import Dict, Any, Optional
 from playwright.async_api import async_playwright, BrowserContext, Page
 from src.human_motion import HumanAgent, inject_visual_cursor
 
+if sys.platform == "win32":
+    try:
+        if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8")
+        if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 logger = logging.getLogger("browser_poster")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -38,12 +47,12 @@ async def open_login_session(profile_name: str) -> None:
     profile_path = PROFILES_DIR / profile_name
     profile_path.mkdir(parents=True, exist_ok=True)
 
-    print(f"\n=======================================================")
-    print(f"🚀 Opening Chrome Profile for: {profile_name}")
-    print(f"📁 Profile location: {profile_path}")
-    print(f"👉 Please log in to your Reddit account in this browser.")
-    print(f"👉 Once you are logged in, you can close the browser or press ENTER in terminal.")
-    print(f"=======================================================\n")
+    print("\n=======================================================")
+    print(f"[Chrome Auth] Opening Chrome Profile for: {profile_name}")
+    print(f"[Chrome Auth] Profile location: {profile_path}")
+    print(f"[Chrome Auth] Please log in to your Reddit account in this browser.")
+    print(f"[Chrome Auth] Once logged in, session cookies will be saved.")
+    print("=======================================================\n")
 
     async with async_playwright() as p:
         context = await p.chromium.launch_persistent_context(
@@ -64,23 +73,29 @@ async def open_login_session(profile_name: str) -> None:
         session_file = SESSIONS_DIR / f"{profile_name}_state.json"
         logger.info("Chrome window open for %s. Waiting for user to finish login...", profile_name)
 
+        saved_once = False
         while True:
             await asyncio.sleep(1)
             # Break when user closes all tabs or browser window
             if not context.pages or all(p.is_closed() for p in context.pages):
                 break
             try:
-                # Automatically save storage state once logged in (away from /login)
+                # Automatically save storage state once logged in on reddit
                 p0 = context.pages[0]
-                if not p0.is_closed() and "/login" not in p0.url:
-                    await context.storage_state(path=str(session_file))
+                if not p0.is_closed():
+                    curr_url = p0.url.lower()
+                    if "reddit.com" in curr_url and "/login" not in curr_url and "accounts.google" not in curr_url:
+                        await context.storage_state(path=str(session_file))
+                        if not saved_once:
+                            logger.info("Reddit login detected! Session state saved to %s", session_file)
+                            saved_once = True
             except Exception:
                 pass
 
         # Final storage state save
         try:
             await context.storage_state(path=str(session_file))
-            print(f"✅ Session state successfully saved to: {session_file}")
+            logger.info("Session state saved to: %s", session_file)
         except Exception:
             pass
 

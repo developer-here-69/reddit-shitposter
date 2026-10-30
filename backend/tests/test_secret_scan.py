@@ -17,6 +17,8 @@ SKIP_DIRS = {
     "node_modules",
     "state",
     "data",
+    "browser_profiles",
+    "browser_sessions",
 }
 
 # Real-looking values, not YOUR_ placeholders.

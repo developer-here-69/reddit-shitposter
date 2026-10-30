@@ -33,6 +33,7 @@ import {
   ArrowDown,
   Info,
   ChevronDown,
+  Globe,
 } from "lucide-react"
 import { RedditAccount, QueuePost, PostCategory } from "@/lib/types"
 import VirtualBrowserWindow from "@/components/VirtualBrowserWindow"
@@ -112,7 +113,20 @@ export default function RedditFeedDashboard() {
       ])
       if (resPosts.posts) setPosts(resPosts.posts)
       if (resPosts.subreddit) setSubreddit(resPosts.subreddit)
-      if (resAccounts.accounts) setAccounts(resAccounts.accounts)
+      if (resAccounts.accounts) {
+        setAccounts(resAccounts.accounts)
+        // Check saved browser session for each account
+        resAccounts.accounts.forEach(async (acc: RedditAccount) => {
+          const numMatch = acc.id.match(/\d+/)
+          const profileName = `account_${numMatch ? numMatch[0] : "1"}`
+          try {
+            const check = await fetch(`/api/browser-login?profileName=${profileName}`).then((r) => r.json())
+            if (check.isAuthenticated && !acc.password) {
+              handleMarkLoggedIn(acc)
+            }
+          } catch {}
+        })
+      }
     } catch (err) {
       console.error(err)
       showToast("Error connecting to server")
@@ -325,55 +339,103 @@ export default function RedditFeedDashboard() {
     }
   }
 
-  // Antigravity-style Browser Agent Poster with In-App Mac Browser Component
+  // Real Browser Agent Poster using authenticated Chrome Profile
   const handlePublishBrowser = async (post: QueuePost) => {
     try {
       setBrowserPostingId(post.id)
-      const assignedAcc = accounts.find((a) => a.id === post.accountId)
+      const assignedAcc = accounts.find((a) => a.id === post.accountId) || accounts[0]
       const numMatch = (assignedAcc?.id || "1").match(/\d+/)
       const profileName = `account_${numMatch ? numMatch[0] : "1"}`
       const username = assignedAcc?.username || "mere_se_nhi_hota"
-      const accId = assignedAcc?.id || "acc-1"
 
-      // Enforce: First must be logged in!
-      const isAccLoggedIn = Boolean(assignedAcc?.password || assignedAcc?.clientId)
-      if (!isAccLoggedIn) {
-        showToast(`⚠️ Please log in to u/${username} first! Opening Mac login window...`)
-        setVirtualBrowserAccount({ profile: profileName, username, id: accId })
-        setVirtualBrowserPost({ title: post.title, body: post.body, id: post.id })
-        setVirtualBrowserMode("login")
-        setVirtualBrowserOpen(true)
+      // Check if session exists or account is logged in
+      const statusRes = await fetch(`/api/browser-login?profileName=${profileName}`)
+      const statusData = await statusRes.json()
+      const hasSession = statusData.isAuthenticated || Boolean(assignedAcc?.password)
+
+      if (!hasSession) {
+        showToast(`⚠️ Opening Real Google Chrome! Please log into Reddit first.`)
+        await handleOpenChromeLogin(assignedAcc)
         return
       }
 
-      // If logged in, open in-app Mac-style browser window and post!
-      setVirtualBrowserAccount({ profile: profileName, username, id: accId })
-      setVirtualBrowserPost({ title: post.title, body: post.body, id: post.id })
-      setVirtualBrowserMode("posting")
-      setVirtualBrowserOpen(true)
+      showToast(`🤖 Browser Agent launching Real Chrome for r/${subreddit}...`)
 
-      showToast("🚀 In-app Mac browser window active! Watch the agent submit live...")
-    } catch {
-      showToast("Error launching browser agent")
+      const res = await fetch("/api/browser-post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postId: post.id,
+          profileName,
+          headless: false,
+        }),
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === post.id
+              ? { ...p, status: "posted", redditUrl: data.url, postedAt: new Date().toISOString() }
+              : p
+          )
+        )
+        showToast("🚀 Successfully posted via Browser Agent to r/" + subreddit)
+      } else {
+        if (data.error && data.error.includes("not logged in")) {
+          showToast("⚠️ Profile not authenticated. Opening Real Chrome to log in...")
+          await handleOpenChromeLogin(assignedAcc)
+        } else {
+          showToast(data.error || "Browser post failed")
+        }
+      }
+    } catch (err: any) {
+      showToast("Error executing browser post: " + (err.message || ""))
     } finally {
       setBrowserPostingId(null)
     }
   }
 
-  // Open In-App Mac login window for a profile
-  const handleOpenChromeLogin = (acc: RedditAccount) => {
+  // Open Real Google Chrome on desktop for logging in to Reddit
+  const handleOpenChromeLogin = async (acc: RedditAccount) => {
     try {
       const numMatch = acc.id.match(/\d+/)
       const profileName = `account_${numMatch ? numMatch[0] : "1"}`
 
-      // Open in-app Mac browser window directly!
-      setVirtualBrowserAccount({ profile: profileName, username: acc.username, id: acc.id })
-      setVirtualBrowserMode("login")
-      setVirtualBrowserOpen(true)
+      showToast(`🌐 Opening Real Google Chrome for u/${acc.username}...`)
 
-      showToast(`🍎 In-app login window open for u/${acc.username}!`)
+      const res = await fetch("/api/browser-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileName }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        showToast(`✅ Real Chrome opened! Log in with Google or password in that window.`)
+      } else {
+        showToast(data.error || "Failed to launch Chrome")
+      }
     } catch {
-      showToast("Error opening login window")
+      showToast("Error launching Chrome")
+    }
+  }
+
+  // Mark account as verified / logged in once user finishes in Chrome
+  const handleMarkLoggedIn = async (acc: RedditAccount) => {
+    try {
+      const updated = { ...acc, password: "logged_in_via_chrome", isActive: true }
+      const res = await fetch("/api/accounts", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setAccounts((prev) => prev.map((a) => (a.id === acc.id ? data.account : a)))
+        showToast(`🎉 u/${acc.username} marked as Logged In & Ready to Post!`)
+      }
+    } catch {
+      showToast("Error updating account state")
     }
   }
 
@@ -864,6 +926,17 @@ export default function RedditFeedDashboard() {
               </button>
             </div>
 
+            {/* Real Chrome Auth Callout */}
+            <div className="p-3 rounded-lg bg-[#FF4500]/10 border border-[#FF4500]/30 text-xs space-y-1.5">
+              <div className="flex items-center gap-1.5 text-white font-bold">
+                <Globe className="w-3.5 h-3.5 text-[#FF4500]" />
+                <span>Real Chrome Reddit Login</span>
+              </div>
+              <p className="text-[11px] text-[#82959B] leading-relaxed">
+                Click <strong>Open Real Chrome 🌐</strong> to launch native Chrome and log into Reddit with your Google account or password. Once logged in, your session is saved for 1-click & cloud posting!
+              </p>
+            </div>
+
             <div className="space-y-2">
               {accounts.map((acc) => (
                 <div
@@ -913,19 +986,31 @@ export default function RedditFeedDashboard() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] text-[#82959B] mt-1.5 pt-1.5 border-t border-[#1F2428]">
+                  <div className="flex items-center justify-between text-[11px] text-[#82959B] mt-1.5 pt-1.5 border-t border-[#1F2428] flex-wrap gap-2">
                     <span>Quota: {acc.postedToday}/{acc.dailyLimit} posted</span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleOpenChromeLogin(acc)}
-                        className="text-[#38BDF8] hover:underline font-semibold cursor-pointer"
-                        title="Log in to Reddit inside the app"
+                        className="px-2.5 py-1 rounded-full bg-[#1A1D20] hover:bg-[#252A30] text-[#38BDF8] hover:text-white border border-[#272B2F] font-semibold cursor-pointer flex items-center gap-1 transition-colors"
+                        title="Opens real Google Chrome on your desktop to log into Reddit"
                       >
-                        {acc.password || acc.clientId ? "Logged in ✓" : "Log in Reddit 🍎"}
+                        <span>Open Real Chrome 🌐</span>
                       </button>
-                      <span className={acc.password || acc.clientId ? "text-[#10B981] font-mono" : "text-[#EAB308]"}>
-                        {acc.password || acc.clientId ? "Ready" : "Auth Needed"}
-                      </span>
+
+                      {acc.password ? (
+                        <span className="text-[#10B981] font-bold flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+                          <span>Logged In ✓</span>
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleMarkLoggedIn(acc)}
+                          className="text-[#EAB308] hover:text-[#10B981] font-semibold hover:underline cursor-pointer"
+                          title="Click here after logging in on Chrome to mark ready"
+                        >
+                          Auth Needed (Click if done ✓)
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

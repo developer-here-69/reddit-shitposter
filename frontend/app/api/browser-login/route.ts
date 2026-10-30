@@ -1,6 +1,26 @@
 import { NextResponse } from "next/server"
 import { spawn } from "child_process"
 import path from "path"
+import fs from "fs"
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const profileName = searchParams.get("profileName") || "account_1"
+
+    const sessionFile = path.resolve(process.cwd(), "..", "backend", "browser_sessions", `${profileName}_state.json`)
+    const exists = fs.existsSync(sessionFile) && fs.statSync(sessionFile).size > 20
+
+    return NextResponse.json({
+      success: true,
+      profileName,
+      isAuthenticated: exists,
+      sessionFile: exists ? sessionFile : null,
+    })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -8,8 +28,23 @@ export async function POST(req: Request) {
 
     const backendDir = path.resolve(process.cwd(), "..", "backend")
     const venvPython = path.resolve(process.cwd(), "..", ".venv", "Scripts", "python.exe")
+    const profileDir = path.resolve(backendDir, "browser_profiles", profileName)
 
-    // Spawn detached process so it opens a real Chrome window for the user to log in
+    if (!fs.existsSync(profileDir)) {
+      fs.mkdirSync(profileDir, { recursive: true })
+    }
+
+    // Remove any orphaned lockfile if present
+    const lockfile = path.join(profileDir, "lockfile")
+    if (fs.existsSync(lockfile)) {
+      try {
+        fs.unlinkSync(lockfile)
+      } catch {
+        // Ignored if actively locked
+      }
+    }
+
+    // Launch python browser poster in login mode (opens real Google Chrome with persistent context)
     const child = spawn(
       venvPython,
       ["-m", "src.browser_poster", "--login", profileName],
@@ -17,15 +52,20 @@ export async function POST(req: Request) {
         cwd: backendDir,
         detached: true,
         stdio: "ignore",
+        env: {
+          ...process.env,
+          PYTHONIOENCODING: "utf-8",
+        },
       }
     )
     child.unref()
 
     return NextResponse.json({
       success: true,
-      message: `Chrome opened for ${profileName}. Log in to Reddit in the browser window, then close it when done!`,
+      message: `Real Google Chrome opened for ${profileName}! Please log in to Reddit using Google or credentials in that window.`,
+      profileName,
     })
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Failed to open login browser" }, { status: 500 })
+    return NextResponse.json({ error: err.message || "Failed to launch Google Chrome" }, { status: 500 })
   }
 }
