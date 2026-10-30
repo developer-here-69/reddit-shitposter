@@ -1,0 +1,60 @@
+# Configuration for r/ArreSuno. Used by Gemini as context, never posted as-is.
+subreddit: ArreSuno
+
+description: |
+  ArreSuno is a Hinglish-first community for Indians to share relatable thoughts,
+  ask interesting questions, seek advice, confess harmless funny things, rant
+  about everyday life, and discuss shared experiences. Think of it as calling your
+  friends and saying, "Arre suno...".
+
+rules_summary: |
+  - Keep conversations genuine, respectful, non-political, and entertaining.
+  - Hinglish-friendly, conversational, and relatable tone.
+  - No spam, hate speech, self-promotion, affiliate links, or political fights.
+  - No fake medical/legal advice or harmful content.
+  - End with an engaging open question that encourages others to share their stories.
+
+categories:
+  - name: relatable_life
+    prompt: Share a funny, relatable everyday observation about Indian life, commute, chai/food, or work/college culture.
+  - name: question
+    prompt: Ask a genuine, thought-provoking question that prompts Indians to share their own experiences or opinions.
+  - name: harmless_confession
+    prompt: Share a lighthearted, innocent confession or a quirky habit and ask if anyone else does this too.
+  - name: casual_rant
+    prompt: Share a relatable, humorous, non-toxic rant about daily mild inconveniences (e.g. traffic, OTP delays, weather, family group forwards).
+
+writing_styles:
+  - conversational
+  - witty
+  - thoughtful
+  - casual
+
+post_lengths:
+  short:
+    min_chars: 180
+    max_chars: 700
+  medium:
+    min_chars: 400
+    max_chars: 1600
+
+# Optional Reddit flair template id (from mod tools / PRAW flair.templates).
+flair_id: null
+flair_text: null
+
+allow_urls: false
+
+banned_phrases:
+  - "guaranteed results"
+  - "click here"
+  - "limited time offer"
+  - "use my code"
+  - "follow me"
+  - "subscribe to my"
+
+# Optional footer appended after validation. Leave empty to disable.
+ai_disclosure: |
+  ---
+  Drafted with AI assistance. Reviewed before posting.
+
+similarity_threshold: 0.85
