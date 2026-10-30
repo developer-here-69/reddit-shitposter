@@ -14,7 +14,8 @@ def test_title_and_body_ok(topics) -> None:
     )
     result = validate_post(title, body, topics, LengthSpec(180, 700))
     assert result.ok, result.errors
-    assert "Drafted with AI" in result.body
+    if topics.ai_disclosure:
+        assert "Drafted with AI" in result.body
 
 
 def test_title_all_caps_rejected(topics) -> None:

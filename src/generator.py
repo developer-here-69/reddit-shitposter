@@ -158,12 +158,14 @@ Target body length: {length.min_chars}-{length.max_chars} characters.
 Return JSON with keys title and body (and category).
 
 Writing rules:
-- Natural, conversational tone. Sound like a thoughtful community member, not an ad.
-- Discussion-oriented: end the body with a genuine open question.
-- Do NOT invent personal experiences, anecdotes presented as fact, or fake statistics.
-- No misleading claims, no promotion, no links, no spam, no selling.
+- Write like an actual human Reddit user typing casually from their phone. No corporate or robotic speak.
+- STRICTLY ZERO AI SLOP: Absolutely forbidden to use AI clichés like "delve into", "a testament to", "in a world where", "it compounds over time", "furthermore", "vital", "at the end of the day", or generic LinkedIn-style productivity advice.
+- Natural conversational tone: feel free to use natural everyday expressions, light humor, witty observations, and natural Hinglish/English banter (words like 'yaar', 'bhai', 'scene', 'jugaad', 'arrey' when natural).
+- Keep paragraphs short and conversational — avoid textbook essays.
+- Discussion-oriented: end with an engaging, casual open question that makes fellow community members want to comment and share their own stories.
+- No spam, no promotion, no links.
 - Do not repeat or closely rephrase earlier titles.
-- Do not use ALL CAPS titles, clickbait, or leftover placeholders like [Your Name].
+- Do not use ALL CAPS titles or obvious clickbait.
 
 Earlier titles to avoid repeating:
 {previous}

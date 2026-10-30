@@ -2,41 +2,40 @@
 subreddit: ArreSuno
 
 description: |
-  ArreSuno is a Hinglish-first community for Indians to share relatable thoughts,
-  ask interesting questions, seek advice, confess harmless funny things, rant
-  about everyday life, and discuss shared experiences. Think of it as calling your
-  friends and saying, "Arre suno...".
+  ArreSuno is a Hinglish-first community for Indians to share real relatable thoughts,
+  funny observations, confessions, college/office rants, and discuss everyday experiences.
+  Think of it as sitting with your friends at a chai tapri and saying, "Arre suno...".
 
 rules_summary: |
-  - Keep conversations genuine, respectful, non-political, and entertaining.
-  - Hinglish-friendly, conversational, and relatable tone.
-  - No spam, hate speech, self-promotion, affiliate links, or political fights.
-  - No fake medical/legal advice or harmful content.
-  - End with an engaging open question that encourages others to share their stories.
+  - Keep conversations genuine, respectful, non-political, entertaining, and relatable.
+  - Sound like a real person, not an AI bot or corporate blog.
+  - Natural mix of Hinglish and English.
+  - No spam, hate speech, self-promotion, affiliate links, or political debates.
+  - End with a casual, engaging question that invites others to share their funny/relatable experiences.
 
 categories:
   - name: relatable_life
-    prompt: Share a funny, relatable everyday observation about Indian life, commute, chai/food, or work/college culture.
+    prompt: Share a funny, relatable everyday observation about Indian life (e.g., auto drivers rejecting rides, bargaining skills, metro/local train struggles, chai addiction, office corporate jargon vs reality).
   - name: question
-    prompt: Ask a genuine, thought-provoking question that prompts Indians to share their own experiences or opinions.
+    prompt: Ask a witty or intriguing question that gets people sharing funny stories or personal takes (e.g., weirdest superstition you believed, unwritten rules of Indian households, strange habits).
   - name: harmless_confession
-    prompt: Share a lighthearted, innocent confession or a quirky habit and ask if anyone else does this too.
+    prompt: Share a lighthearted, innocent confession or funny habit and ask if anyone else is guilty of doing this too.
   - name: casual_rant
-    prompt: Share a relatable, humorous, non-toxic rant about daily mild inconveniences (e.g. traffic, OTP delays, weather, family group forwards).
+    prompt: Share a humorous, non-toxic rant about daily mild frustrations (e.g., 10-minute grocery apps delivering wrong items, endless wedding season invites, family WhatsApp forward sagas).
 
 writing_styles:
   - conversational
   - witty
-  - thoughtful
   - casual
+  - humorous
 
 post_lengths:
   short:
-    min_chars: 180
-    max_chars: 700
+    min_chars: 150
+    max_chars: 600
   medium:
-    min_chars: 400
-    max_chars: 1600
+    min_chars: 300
+    max_chars: 1200
 
 # Optional Reddit flair template id (from mod tools / PRAW flair.templates).
 flair_id: null
@@ -51,10 +50,11 @@ banned_phrases:
   - "use my code"
   - "follow me"
   - "subscribe to my"
+  - "delve into"
+  - "testament to"
+  - "in today's world"
 
-# Optional footer appended after validation. Leave empty to disable.
-ai_disclosure: |
-  ---
-  Drafted with AI assistance. Reviewed before posting.
+# Optional footer appended after validation. Left blank to avoid AI slop watermark.
+ai_disclosure: ""
 
 similarity_threshold: 0.85
