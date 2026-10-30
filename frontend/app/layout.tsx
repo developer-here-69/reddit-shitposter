@@ -3,7 +3,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 
 export const metadata: Metadata = {
-  title: "ArreSuno AutoPoster — Reddit Multi-Account Automation",
+  title: "ArreSuno Auto Poster",
   description: "Automated multi-account discussion scheduling and queue manager for r/ArreSuno",
 }
 
