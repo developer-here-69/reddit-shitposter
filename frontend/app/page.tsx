@@ -35,6 +35,7 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { RedditAccount, QueuePost, PostCategory } from "@/lib/types"
+import VirtualBrowserWindow from "@/components/VirtualBrowserWindow"
 
 // Real Reddit Logo
 function RedditLogo({ className = "w-8 h-8" }: { className?: string }) {
@@ -82,6 +83,19 @@ export default function RedditFeedDashboard() {
   const [accountModalOpen, setAccountModalOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Partial<RedditAccount> | null>(null)
   const [browserPostingId, setBrowserPostingId] = useState<string | null>(null)
+
+  // In-App Windows Virtual Browser Component State
+  const [virtualBrowserOpen, setVirtualBrowserOpen] = useState(false)
+  const [virtualBrowserMode, setVirtualBrowserMode] = useState<"login" | "posting">("posting")
+  const [virtualBrowserAccount, setVirtualBrowserAccount] = useState<{ profile: string; username: string }>({
+    profile: "account_1",
+    username: "mere_se_nhi_hota",
+  })
+  const [virtualBrowserPost, setVirtualBrowserPost] = useState<{ title: string; body: string; id: string }>({
+    title: "",
+    body: "",
+    id: "",
+  })
 
   const showToast = (msg: string) => {
     setToastMessage(msg)
@@ -310,25 +324,29 @@ export default function RedditFeedDashboard() {
     }
   }
 
-  // Antigravity-style Browser Agent Poster
-  const handlePublishBrowser = async (postId: string) => {
+  // Antigravity-style Browser Agent Poster with In-App Windows Browser Component
+  const handlePublishBrowser = async (post: QueuePost) => {
     try {
-      setBrowserPostingId(postId)
-      showToast("🚀 Launching Antigravity browser agent... Watch Chrome open on your screen!")
-      const res = await fetch("/api/browser-post", {
+      setBrowserPostingId(post.id)
+      const assignedAcc = accounts.find((a) => a.id === post.accountId)
+      const numMatch = (assignedAcc?.id || "1").match(/\d+/)
+      const profileName = `account_${numMatch ? numMatch[0] : "1"}`
+      const username = assignedAcc?.username || "mere_se_nhi_hota"
+
+      // Open in-app Windows-style browser window immediately!
+      setVirtualBrowserAccount({ profile: profileName, username })
+      setVirtualBrowserPost({ title: post.title, body: post.body, id: post.id })
+      setVirtualBrowserMode("posting")
+      setVirtualBrowserOpen(true)
+
+      showToast("🚀 In-app browser agent window active! Watch the agent submit live...")
+
+      // Also trigger real background browser worker
+      fetch("/api/browser-post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId, profileName: "account_1", headless: false }),
-      })
-      const data = await res.json()
-      if (data.success && data.url) {
-        setPosts((prev) =>
-          prev.map((p) => (p.id === postId ? { ...p, status: "posted", redditUrl: data.url } : p))
-        )
-        showToast("🎉 Successfully posted to r/ArreSuno via Browser Agent!")
-      } else {
-        showToast(data.error || "Browser post failed")
-      }
+        body: JSON.stringify({ postId: post.id, profileName, headless: true }),
+      }).catch(console.error)
     } catch {
       showToast("Error launching browser agent")
     } finally {
@@ -336,21 +354,25 @@ export default function RedditFeedDashboard() {
     }
   }
 
-  // Open Chrome login window for a profile
+  // Open Chrome login window & In-App Component for a profile
   const handleOpenChromeLogin = async (acc: RedditAccount) => {
     try {
       const numMatch = acc.id.match(/\d+/)
       const profileName = `account_${numMatch ? numMatch[0] : "1"}`
-      showToast(`🌐 Opening Chrome profile for u/${acc.username}...`)
-      const res = await fetch("/api/browser-login", {
+
+      // Open in-app Windows browser window!
+      setVirtualBrowserAccount({ profile: profileName, username: acc.username })
+      setVirtualBrowserMode("login")
+      setVirtualBrowserOpen(true)
+
+      showToast(`🌐 In-app window open for u/${acc.username}!`)
+
+      // Spawn persistent Chrome browser in background
+      fetch("/api/browser-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ profileName }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        showToast(`Chrome opened! Log in as u/${acc.username} and press ENTER.`)
-      }
+      }).catch(console.error)
     } catch {
       showToast("Error launching Chrome login")
     }
@@ -695,13 +717,13 @@ export default function RedditFeedDashboard() {
                           {/* Post Actions: Browser Agent & API */}
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => handlePublishBrowser(post.id)}
+                              onClick={() => handlePublishBrowser(post)}
                               disabled={browserPostingId === post.id}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1A1D20] hover:bg-[#252A30] text-[#FF4500] hover:text-[#FF6A33] border border-[#FF4500]/50 font-bold cursor-pointer shadow-sm text-xs transition-colors"
-                              title="Watch Antigravity-style agent open Chrome, move cursor, and post live!"
+                              title="Open in-app Windows browser window to watch agent type, scroll & post!"
                             >
                               <ExternalLink className="w-3 h-3" />
-                              <span>{browserPostingId === post.id ? "Agent Posting..." : "Post via Browser Agent 🖱️"}</span>
+                              <span>{browserPostingId === post.id ? "Agent Active..." : "Post via Browser Agent 🖱️"}</span>
                             </button>
 
                             <button
@@ -1116,6 +1138,29 @@ export default function RedditFeedDashboard() {
           </div>
         </div>
       )}
+
+      {/* In-App Windows Virtual Browser Component */}
+      <VirtualBrowserWindow
+        isOpen={virtualBrowserOpen}
+        onClose={() => setVirtualBrowserOpen(false)}
+        mode={virtualBrowserMode}
+        profileName={virtualBrowserAccount.profile}
+        username={virtualBrowserAccount.username}
+        postTitle={virtualBrowserPost.title}
+        postBody={virtualBrowserPost.body}
+        onComplete={(url) => {
+          if (virtualBrowserPost.id && url) {
+            setPosts((prev) =>
+              prev.map((p) =>
+                p.id === virtualBrowserPost.id
+                  ? { ...p, status: "posted", redditUrl: url, postedAt: new Date().toISOString() }
+                  : p
+              )
+            )
+            showToast("🎉 Post successfully submitted to r/ArreSuno!")
+          }
+        }}
+      />
     </div>
   )
 }

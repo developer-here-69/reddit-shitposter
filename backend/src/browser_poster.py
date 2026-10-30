@@ -60,15 +60,29 @@ async def open_login_session(profile_name: str) -> None:
         page = context.pages[0] if context.pages else await context.new_page()
         await page.goto("https://www.reddit.com/login", wait_until="domcontentloaded")
 
-        # Keep browser open until user presses Enter or closes window
-        loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, input, "Press ENTER after you have logged in to Reddit in the browser window: ")
-
-        # Export session state for cloud / laptop-off runner
+        # Keep browser open until user manually closes the browser window
         session_file = SESSIONS_DIR / f"{profile_name}_state.json"
-        await context.storage_state(path=str(session_file))
-        print(f"✅ Session state successfully saved to: {session_file}")
-        await context.close()
+        logger.info("Chrome window open for %s. Waiting for user to finish login...", profile_name)
+
+        while True:
+            await asyncio.sleep(1)
+            # Break when user closes all tabs or browser window
+            if not context.pages or all(p.is_closed() for p in context.pages):
+                break
+            try:
+                # Automatically save storage state once logged in (away from /login)
+                p0 = context.pages[0]
+                if not p0.is_closed() and "/login" not in p0.url:
+                    await context.storage_state(path=str(session_file))
+            except Exception:
+                pass
+
+        # Final storage state save
+        try:
+            await context.storage_state(path=str(session_file))
+            print(f"✅ Session state successfully saved to: {session_file}")
+        except Exception:
+            pass
 
 
 async def post_to_reddit(
