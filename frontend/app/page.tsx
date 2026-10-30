@@ -81,6 +81,7 @@ export default function RedditFeedDashboard() {
   // Account modal
   const [accountModalOpen, setAccountModalOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Partial<RedditAccount> | null>(null)
+  const [browserPostingId, setBrowserPostingId] = useState<string | null>(null)
 
   const showToast = (msg: string) => {
     setToastMessage(msg)
@@ -306,6 +307,52 @@ export default function RedditFeedDashboard() {
       }
     } catch {
       showToast("Error executing post")
+    }
+  }
+
+  // Antigravity-style Browser Agent Poster
+  const handlePublishBrowser = async (postId: string) => {
+    try {
+      setBrowserPostingId(postId)
+      showToast("🚀 Launching Antigravity browser agent... Watch Chrome open on your screen!")
+      const res = await fetch("/api/browser-post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId, profileName: "account_1", headless: false }),
+      })
+      const data = await res.json()
+      if (data.success && data.url) {
+        setPosts((prev) =>
+          prev.map((p) => (p.id === postId ? { ...p, status: "posted", redditUrl: data.url } : p))
+        )
+        showToast("🎉 Successfully posted to r/ArreSuno via Browser Agent!")
+      } else {
+        showToast(data.error || "Browser post failed")
+      }
+    } catch {
+      showToast("Error launching browser agent")
+    } finally {
+      setBrowserPostingId(null)
+    }
+  }
+
+  // Open Chrome login window for a profile
+  const handleOpenChromeLogin = async (acc: RedditAccount) => {
+    try {
+      const numMatch = acc.id.match(/\d+/)
+      const profileName = `account_${numMatch ? numMatch[0] : "1"}`
+      showToast(`🌐 Opening Chrome profile for u/${acc.username}...`)
+      const res = await fetch("/api/browser-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileName }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        showToast(`Chrome opened! Log in as u/${acc.username} and press ENTER.`)
+      }
+    } catch {
+      showToast("Error launching Chrome login")
     }
   }
 
@@ -645,14 +692,26 @@ export default function RedditFeedDashboard() {
                             </button>
                           </div>
 
-                          {/* Post Now Action */}
-                          <button
-                            onClick={() => handlePublishNow(post.id)}
-                            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#FF4500] hover:bg-[#E03D00] text-white font-bold cursor-pointer shadow-sm text-xs"
-                          >
-                            <Send className="w-3 h-3" />
-                            <span>Post to Reddit Now</span>
-                          </button>
+                          {/* Post Actions: Browser Agent & API */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handlePublishBrowser(post.id)}
+                              disabled={browserPostingId === post.id}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1A1D20] hover:bg-[#252A30] text-[#FF4500] hover:text-[#FF6A33] border border-[#FF4500]/50 font-bold cursor-pointer shadow-sm text-xs transition-colors"
+                              title="Watch Antigravity-style agent open Chrome, move cursor, and post live!"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              <span>{browserPostingId === post.id ? "Agent Posting..." : "Post via Browser Agent 🖱️"}</span>
+                            </button>
+
+                            <button
+                              onClick={() => handlePublishNow(post.id)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FF4500] hover:bg-[#E03D00] text-white font-bold cursor-pointer shadow-sm text-xs"
+                            >
+                              <Send className="w-3 h-3" />
+                              <span>Post (API)</span>
+                            </button>
+                          </div>
                         </div>
                       </Reorder.Item>
                     )
@@ -835,9 +894,18 @@ export default function RedditFeedDashboard() {
 
                   <div className="flex items-center justify-between text-[11px] text-[#82959B] mt-1.5 pt-1.5 border-t border-[#1F2428]">
                     <span>Quota: {acc.postedToday}/{acc.dailyLimit} posted</span>
-                    <span className={acc.clientId ? "text-[#10B981] font-mono" : "text-[#EAB308]"}>
-                      {acc.clientId ? "Ready" : "Auth Needed"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleOpenChromeLogin(acc)}
+                        className="text-[#38BDF8] hover:underline font-semibold cursor-pointer"
+                        title="Open Chrome to log in once"
+                      >
+                        Log in Chrome 🌐
+                      </button>
+                      <span className={acc.clientId ? "text-[#10B981] font-mono" : "text-[#EAB308]"}>
+                        {acc.clientId ? "Ready" : "Auth Needed"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
