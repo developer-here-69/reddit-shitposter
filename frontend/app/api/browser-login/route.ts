@@ -27,7 +27,10 @@ export async function POST(req: Request) {
     const { profileName = "account_1" } = await req.json()
 
     const backendDir = path.resolve(process.cwd(), "..", "backend")
-    const venvPython = path.resolve(process.cwd(), "..", ".venv", "Scripts", "python.exe")
+    const venvPythonw = path.resolve(process.cwd(), "..", ".venv", "Scripts", "pythonw.exe")
+    const venvPython = fs.existsSync(venvPythonw)
+      ? venvPythonw
+      : path.resolve(process.cwd(), "..", ".venv", "Scripts", "python.exe")
     const profileDir = path.resolve(backendDir, "browser_profiles", profileName)
 
     if (!fs.existsSync(profileDir)) {
@@ -45,6 +48,7 @@ export async function POST(req: Request) {
     }
 
     // Launch python browser poster in login mode (opens real Google Chrome with persistent context)
+    // pythonw.exe + windowsHide: true guarantees NO black CMD/Terminal window pops up!
     const child = spawn(
       venvPython,
       ["-m", "src.browser_poster", "--login", profileName],
@@ -52,6 +56,7 @@ export async function POST(req: Request) {
         cwd: backendDir,
         detached: true,
         stdio: "ignore",
+        windowsHide: true,
         env: {
           ...process.env,
           PYTHONIOENCODING: "utf-8",

@@ -55,16 +55,20 @@ async def open_login_session(profile_name: str) -> None:
     print("=======================================================\n")
 
     async with async_playwright() as p:
-        context = await p.chromium.launch_persistent_context(
-            user_data_dir=str(profile_path),
-            headless=False,
-            channel="chrome",  # Uses local Chrome if available, or falls back to Chromium
-            viewport={"width": 1280, "height": 800},
-            args=[
-                "--disable-blink-features=AutomationControlled",
-                "--start-maximized",
-            ],
-        )
+        try:
+            context = await p.chromium.launch_persistent_context(
+                user_data_dir=str(profile_path),
+                headless=False,
+                channel="chrome",
+                args=["--disable-blink-features=AutomationControlled"],
+            )
+        except Exception as e:
+            logger.warning("Failed launching channel=chrome (%s), using bundled Chromium", e)
+            context = await p.chromium.launch_persistent_context(
+                user_data_dir=str(profile_path),
+                headless=False,
+                args=["--disable-blink-features=AutomationControlled"],
+            )
 
         page = context.pages[0] if context.pages else await context.new_page()
         await page.goto("https://www.reddit.com/login", wait_until="domcontentloaded")

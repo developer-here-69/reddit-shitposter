@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
     const cmd = `"${venvPython}" -m src.browser_poster --post "${profileName}" --title "${safeTitle}" --body "${safeBody}" --subreddit "${state.subreddit}" ${headless ? "--headless" : ""}`
 
-    const { stdout, stderr } = await execAsync(cmd, { cwd: backendDir, timeout: 60000 })
+    const { stdout, stderr } = await execAsync(cmd, { cwd: backendDir, timeout: 60000, windowsHide: true })
 
     // Find JSON result from output
     const jsonMatch = stdout.match(/Result:\s*(\{[\s\S]*?\})/m)
