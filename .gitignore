@@ -35,3 +35,13 @@ state-workdir/
 *.log
 .DS_Store
 Thumbs.db
+
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.env*.local
+frontend/data/*.json
+!frontend/data/.gitkeep
+

@@ -5,7 +5,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
-WF = ROOT / ".github" / "workflows" / "reddit-posting.yml"
+WF = (ROOT / ".github" / "workflows" / "reddit-posting.yml") if (ROOT / ".github").exists() else (ROOT.parent / ".github" / "workflows" / "reddit-posting.yml")
 
 
 def test_workflow_parses_and_has_safety_keys() -> None:

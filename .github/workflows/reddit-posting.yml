@@ -32,6 +32,9 @@ jobs:
   post:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
     env:
       MODE: ${{ github.event.inputs.mode || vars.MODE || 'dry_run' }}
       POSTING_ENABLED: ${{ vars.POSTING_ENABLED || 'false' }}

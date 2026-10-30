@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = ROOT if (ROOT / ".git").exists() else ROOT.parent
 
 SKIP_DIRS = {
     ".git",
@@ -33,9 +34,10 @@ def test_no_dotenv_committed() -> None:
     # In CI/GitHub Actions, .env must never exist in the repo checkout.
     # Locally, verify that .gitignore properly excludes .env so it cannot be committed.
     if os.getenv("CI") or os.getenv("GITHUB_ACTIONS"):
-        assert not (ROOT / ".env").exists() or (ROOT / ".env").stat().st_size == 0
+        assert not (ROOT / ".env").exists() and not (REPO_ROOT / ".env").exists()
     else:
-        gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
+        gitignore_path = REPO_ROOT / ".gitignore" if (REPO_ROOT / ".gitignore").exists() else ROOT / ".gitignore"
+        gitignore = gitignore_path.read_text(encoding="utf-8")
         assert ".env" in gitignore
 
 

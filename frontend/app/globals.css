@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+:root {
+  --background: #090a0f;
+  --foreground: #f1f3f7;
+  --card: #0f121b;
+  --card-border: #1a1e2d;
+  --muted: #161925;
+  --muted-foreground: #7d859b;
+  --accent: #1c2132;
+  --reddit-orange: #ff4500;
+  --success: #10b981;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Segoe UI", Roboto, sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090a0f;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e2334;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2b3248;
+}
