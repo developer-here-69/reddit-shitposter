@@ -44,6 +44,19 @@ frontend/build/
 frontend/data/*.json
 !frontend/data/.gitkeep
 
+# Node / Electron
+node_modules/
+dist/
+dist-electron/
+release/
+.vite/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.local
+
 # Browser automation profiles & sessions
 backend/browser_profiles/
 backend/browser_sessions/
+
