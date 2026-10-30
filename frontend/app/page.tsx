@@ -84,12 +84,13 @@ export default function RedditFeedDashboard() {
   const [editingAccount, setEditingAccount] = useState<Partial<RedditAccount> | null>(null)
   const [browserPostingId, setBrowserPostingId] = useState<string | null>(null)
 
-  // In-App Windows Virtual Browser Component State
+  // In-App Mac Virtual Browser Component State
   const [virtualBrowserOpen, setVirtualBrowserOpen] = useState(false)
   const [virtualBrowserMode, setVirtualBrowserMode] = useState<"login" | "posting">("posting")
-  const [virtualBrowserAccount, setVirtualBrowserAccount] = useState<{ profile: string; username: string }>({
+  const [virtualBrowserAccount, setVirtualBrowserAccount] = useState<{ profile: string; username: string; id: string }>({
     profile: "account_1",
     username: "mere_se_nhi_hota",
+    id: "acc-1",
   })
   const [virtualBrowserPost, setVirtualBrowserPost] = useState<{ title: string; body: string; id: string }>({
     title: "",
@@ -324,7 +325,7 @@ export default function RedditFeedDashboard() {
     }
   }
 
-  // Antigravity-style Browser Agent Poster with In-App Windows Browser Component
+  // Antigravity-style Browser Agent Poster with In-App Mac Browser Component
   const handlePublishBrowser = async (post: QueuePost) => {
     try {
       setBrowserPostingId(post.id)
@@ -332,21 +333,26 @@ export default function RedditFeedDashboard() {
       const numMatch = (assignedAcc?.id || "1").match(/\d+/)
       const profileName = `account_${numMatch ? numMatch[0] : "1"}`
       const username = assignedAcc?.username || "mere_se_nhi_hota"
+      const accId = assignedAcc?.id || "acc-1"
 
-      // Open in-app Windows-style browser window immediately!
-      setVirtualBrowserAccount({ profile: profileName, username })
+      // Enforce: First must be logged in!
+      const isAccLoggedIn = Boolean(assignedAcc?.password || assignedAcc?.clientId)
+      if (!isAccLoggedIn) {
+        showToast(`⚠️ Please log in to u/${username} first! Opening Mac login window...`)
+        setVirtualBrowserAccount({ profile: profileName, username, id: accId })
+        setVirtualBrowserPost({ title: post.title, body: post.body, id: post.id })
+        setVirtualBrowserMode("login")
+        setVirtualBrowserOpen(true)
+        return
+      }
+
+      // If logged in, open in-app Mac-style browser window and post!
+      setVirtualBrowserAccount({ profile: profileName, username, id: accId })
       setVirtualBrowserPost({ title: post.title, body: post.body, id: post.id })
       setVirtualBrowserMode("posting")
       setVirtualBrowserOpen(true)
 
-      showToast("🚀 In-app browser agent window active! Watch the agent submit live...")
-
-      // Also trigger real background browser worker
-      fetch("/api/browser-post", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId: post.id, profileName, headless: true }),
-      }).catch(console.error)
+      showToast("🚀 In-app Mac browser window active! Watch the agent submit live...")
     } catch {
       showToast("Error launching browser agent")
     } finally {
@@ -354,27 +360,20 @@ export default function RedditFeedDashboard() {
     }
   }
 
-  // Open Chrome login window & In-App Component for a profile
-  const handleOpenChromeLogin = async (acc: RedditAccount) => {
+  // Open In-App Mac login window for a profile
+  const handleOpenChromeLogin = (acc: RedditAccount) => {
     try {
       const numMatch = acc.id.match(/\d+/)
       const profileName = `account_${numMatch ? numMatch[0] : "1"}`
 
-      // Open in-app Windows browser window!
-      setVirtualBrowserAccount({ profile: profileName, username: acc.username })
+      // Open in-app Mac browser window directly!
+      setVirtualBrowserAccount({ profile: profileName, username: acc.username, id: acc.id })
       setVirtualBrowserMode("login")
       setVirtualBrowserOpen(true)
 
-      showToast(`🌐 In-app window open for u/${acc.username}!`)
-
-      // Spawn persistent Chrome browser in background
-      fetch("/api/browser-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profileName }),
-      }).catch(console.error)
+      showToast(`🍎 In-app login window open for u/${acc.username}!`)
     } catch {
-      showToast("Error launching Chrome login")
+      showToast("Error opening login window")
     }
   }
 
@@ -920,12 +919,12 @@ export default function RedditFeedDashboard() {
                       <button
                         onClick={() => handleOpenChromeLogin(acc)}
                         className="text-[#38BDF8] hover:underline font-semibold cursor-pointer"
-                        title="Open Chrome to log in once"
+                        title="Log in to Reddit inside the app"
                       >
-                        Log in Chrome 🌐
+                        {acc.password || acc.clientId ? "Logged in ✓" : "Log in Reddit 🍎"}
                       </button>
-                      <span className={acc.clientId ? "text-[#10B981] font-mono" : "text-[#EAB308]"}>
-                        {acc.clientId ? "Ready" : "Auth Needed"}
+                      <span className={acc.password || acc.clientId ? "text-[#10B981] font-mono" : "text-[#EAB308]"}>
+                        {acc.password || acc.clientId ? "Ready" : "Auth Needed"}
                       </span>
                     </div>
                   </div>
@@ -1139,15 +1138,30 @@ export default function RedditFeedDashboard() {
         </div>
       )}
 
-      {/* In-App Windows Virtual Browser Component */}
+      {/* In-App Mac Virtual Browser Component */}
       <VirtualBrowserWindow
         isOpen={virtualBrowserOpen}
         onClose={() => setVirtualBrowserOpen(false)}
         mode={virtualBrowserMode}
         profileName={virtualBrowserAccount.profile}
         username={virtualBrowserAccount.username}
+        accountId={virtualBrowserAccount.id}
+        isLoggedIn={Boolean(
+          accounts.find((a) => a.id === virtualBrowserAccount.id)?.password ||
+          accounts.find((a) => a.id === virtualBrowserAccount.id)?.clientId
+        )}
         postTitle={virtualBrowserPost.title}
         postBody={virtualBrowserPost.body}
+        onLoginSuccess={(accData) => {
+          setAccounts((prev) =>
+            prev.map((a) =>
+              a.id === virtualBrowserAccount.id
+                ? { ...a, ...accData, isActive: true }
+                : a
+            )
+          )
+          showToast(`🎉 u/${accData.username} is successfully logged in! Ready to post.`)
+        }}
         onComplete={(url) => {
           if (virtualBrowserPost.id && url) {
             setPosts((prev) =>
